@@ -1,18 +1,33 @@
 """
 FinanceDaily Automation - Publisher
-Publishes articles to the FinanceDaily site via API
+Publishes articles directly to the local JSON database and pushes to GitHub
 """
 import re
+import os
+import json
 import random
-import requests
-from base64 import b64encode
-from config import SITE_URL, ADMIN_USERNAME, ADMIN_PASSWORD, CATEGORIES
+import subprocess
+from datetime import datetime
+from config import CATEGORIES
+
+# Path to the local database
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'data.json')
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
 
 
-def get_auth_header() -> str:
-    """Generate Basic Auth header"""
-    credentials = b64encode(f"{ADMIN_USERNAME}:{ADMIN_PASSWORD}".encode()).decode()
-    return f"Basic {credentials}"
+def load_database() -> dict:
+    """Load the JSON database"""
+    try:
+        with open(DB_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"articles": [], "nextId": 1}
+
+
+def save_database(data: dict):
+    """Save the JSON database"""
+    with open(DB_PATH, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def slugify(text: str) -> str:
@@ -50,7 +65,7 @@ def estimate_reading_time(content: str) -> int:
 
 def publish_article(article_data: dict, category_id: int = None) -> bool:
     """
-    Publish an article via the FinanceDaily API
+    Publish an article directly to the local JSON database
     
     Args:
         article_data: dict with title, excerpt, content, meta_title, meta_description, meta_keywords
@@ -68,8 +83,22 @@ def publish_article(article_data: dict, category_id: int = None) -> bool:
         # Generate slug
         slug = slugify(article_data['title'])
 
-        # Prepare payload
-        payload = {
+        # Load existing database
+        db = load_database()
+
+        # Check if article already exists (by slug)
+        for existing in db['articles']:
+            if existing.get('slug') == slug:
+                print(f"  ⏭️  Already exists: {article_data['title'][:40]}...")
+                return False
+
+        # Get next ID
+        next_id = db.get('nextId', len(db['articles']) + 1)
+
+        # Create article object
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        article = {
+            'id': next_id,
             'title': article_data['title'],
             'slug': slug,
             'excerpt': article_data.get('excerpt', '')[:200],
@@ -80,45 +109,77 @@ def publish_article(article_data: dict, category_id: int = None) -> bool:
             'meta_title': article_data.get('meta_title', article_data['title'])[:60],
             'meta_description': article_data.get('meta_description', '')[:160],
             'meta_keywords': article_data.get('meta_keywords', ''),
-            'is_published': True,
-            'is_featured': False,
+            'is_published': 1,
+            'is_featured': 0,
             'reading_time': estimate_reading_time(article_data['content']),
             'source_url': article_data.get('source_url', ''),
             'views': random.randint(1200, 100000),
+            'created_at': now,
+            'updated_at': now,
         }
 
-        # POST to API
-        url = f"{SITE_URL}/api/articles"
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': get_auth_header(),
-        }
+        # Add to database
+        db['articles'].append(article)
+        db['nextId'] = next_id + 1
 
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        
-        if response.status_code == 201:
-            data = response.json()
-            print(f"  ✅ Published: {article_data['title'][:60]}...")
-            return True
-        elif response.status_code == 409:
-            print(f"  ⏭️  Already exists: {article_data['title'][:40]}...")
-            return False
-        else:
-            print(f"  ❌ Failed ({response.status_code}): {response.text[:100]}")
-            return False
+        # Save database
+        save_database(db)
 
-    except requests.ConnectionError:
-        print(f"  ❌ Connection error - Is the site running at {SITE_URL}?")
-        return False
+        print(f"  ✅ Published: {article_data['title'][:60]}...")
+        return True
+
     except Exception as e:
         print(f"  ❌ Publish error: {e}")
         return False
 
 
 def check_site_health() -> bool:
-    """Check if the FinanceDaily site is running"""
+    """Always returns True since we write locally now"""
+    return True
+
+
+def git_push_changes() -> bool:
+    """Commit and push changes to GitHub, triggering Vercel rebuild"""
     try:
-        response = requests.get(f"{SITE_URL}/api/categories", timeout=5)
-        return response.status_code == 200
-    except:
+        git_exe = r"C:\Program Files\Git\bin\git.exe"
+        
+        # Add all changes
+        subprocess.run(
+            [git_exe, 'add', '-A'],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True
+        )
+
+        # Commit
+        now = datetime.now().strftime('%Y-%m-%d %H:%M')
+        result = subprocess.run(
+            [git_exe, 'commit', '-m', f'Auto-publish articles - {now}'],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True
+        )
+
+        if 'nothing to commit' in result.stdout:
+            print("   ℹ️  No changes to commit")
+            return True
+
+        # Push to GitHub
+        result = subprocess.run(
+            [git_exe, 'push', 'origin', 'master'],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+
+        if result.returncode == 0:
+            print("   ✅ Pushed to GitHub → Vercel will auto-rebuild")
+            return True
+        else:
+            print(f"   ❌ Git push failed: {result.stderr[:200]}")
+            return False
+
+    except Exception as e:
+        print(f"   ❌ Git error: {e}")
         return False

@@ -14,7 +14,7 @@ from datetime import datetime
 from config import ARTICLES_PER_RUN, OPENAI_API_KEY, NEWS_API_KEY
 from news_fetcher import fetch_all_news
 from ai_writer import generate_article
-from publisher import publish_article, detect_category, check_site_health, slugify
+from publisher import publish_article, detect_category, check_site_health, slugify, git_push_changes
 from image_handler import get_article_image
 
 
@@ -43,15 +43,13 @@ def run_automation():
     print(f"\n🚀 Starting automation run at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print("─" * 50)
 
-    # Step 1: Check if site is running
-    print("\n1️⃣  Checking site health...")
+    # Step 1: Check system
+    print("\n1️⃣  Checking system...")
     if not check_site_health():
-        print("   ❌ FinanceDaily site is not running!")
-        print("   → Make sure to run 'npm run dev' in the project root first")
-        print("   → Site should be available at http://localhost:3000")
+        print("   ❌ System check failed!")
         return
 
-    print("   ✅ Site is healthy and accepting requests")
+    print("   ✅ System ready (local JSON + GitHub deploy)")
 
     # Step 2: Fetch news
     print("\n2️⃣  Fetching latest financial news...")
@@ -115,6 +113,12 @@ def run_automation():
     print(f"   ✅ Published: {published_count}")
     print(f"   ❌ Failed/Skipped: {failed_count}")
     print(f"   ⏱️  Duration: {elapsed:.1f}s")
+
+    # Step 5: Push to GitHub → Vercel auto-rebuilds
+    if published_count > 0:
+        print(f"\n5️⃣  Pushing to GitHub (triggers Vercel rebuild)...")
+        git_push_changes()
+
     print(f"   🕐 Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
