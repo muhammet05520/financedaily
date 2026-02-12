@@ -2,6 +2,8 @@
 FinanceDaily Automation - News Fetcher
 Fetches latest financial news from NewsAPI and other sources
 """
+import os
+import json
 import requests
 import random
 from datetime import datetime, timedelta
@@ -83,8 +85,62 @@ def fetch_market_data() -> dict:
     return market_data
 
 
+def get_existing_titles() -> set:
+    """Get titles of already published articles from database"""
+    try:
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'database', 'data.json')
+        with open(db_path, 'r', encoding='utf-8') as f:
+            db = json.load(f)
+        # Return set of lowercase title keywords for fuzzy matching
+        titles = set()
+        for article in db.get('articles', []):
+            title = article.get('title', '').lower().strip()
+            titles.add(title)
+            # Also add key phrases (first 5 words) for fuzzy matching
+            words = title.split()[:5]
+            if len(words) >= 3:
+                titles.add(' '.join(words))
+        return titles
+    except:
+        return set()
+
+
+def is_duplicate(title: str, existing_titles: set) -> bool:
+    """Check if a news title is too similar to existing articles"""
+    title_lower = title.lower().strip()
+    
+    # Exact match
+    if title_lower in existing_titles:
+        return True
+    
+    # Check if first 5 words match any existing article
+    words = title_lower.split()[:5]
+    if len(words) >= 3:
+        key_phrase = ' '.join(words)
+        for existing in existing_titles:
+            if key_phrase in existing or existing in key_phrase:
+                return True
+    
+    # Check word overlap (if >70% words match, it's likely the same topic)
+    title_words = set(title_lower.split())
+    # Remove common words
+    stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'as', 'by', 'with', 'from', 'its', 'it', 'this', 'that', 'how', 'why', 'what'}
+    title_words -= stop_words
+    
+    if len(title_words) >= 3:
+        for existing in existing_titles:
+            existing_words = set(existing.split()) - stop_words
+            if len(existing_words) >= 3:
+                overlap = title_words & existing_words
+                similarity = len(overlap) / max(len(title_words), len(existing_words))
+                if similarity >= 0.7:
+                    return True
+    
+    return False
+
+
 def fetch_all_news() -> list:
-    """Fetch news from all topics"""
+    """Fetch news from all topics, filtering out already published articles"""
     all_news = []
     print("\n📰 Fetching news from all topics...")
 
@@ -93,7 +149,7 @@ def fetch_all_news() -> list:
         news = fetch_news_from_newsapi(topic, page_size=3)
         all_news.extend(news)
 
-    # Remove duplicates based on title
+    # Remove duplicates based on title (within fetched news)
     seen_titles = set()
     unique_news = []
     for article in all_news:
@@ -103,6 +159,20 @@ def fetch_all_news() -> list:
             unique_news.append(article)
 
     print(f"  ✓ Found {len(unique_news)} unique news articles")
+
+    # Filter out articles that are already in our database
+    existing_titles = get_existing_titles()
+    if existing_titles:
+        new_articles = []
+        for article in unique_news:
+            if is_duplicate(article['title'], existing_titles):
+                print(f"  ⏭️  Zaten mevcut: {article['title'][:50]}...")
+            else:
+                new_articles.append(article)
+        
+        print(f"  ✓ {len(new_articles)} YENİ makale bulundu ({len(unique_news) - len(new_articles)} atlandı)")
+        return new_articles
+
     return unique_news
 
 

@@ -2,9 +2,27 @@
 FinanceDaily Automation - Configuration
 """
 import os
+import sys
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env.local'))
+# Find .env.local - works both as script and as exe
+if getattr(sys, 'frozen', False):
+    _base = os.path.dirname(sys.executable)
+else:
+    _base = os.path.dirname(os.path.abspath(__file__))
+
+# Try multiple possible locations for .env.local
+for _try_path in [
+    os.path.join(_base, '..', '.env.local'),
+    os.path.join(_base, '.env.local'),
+    os.path.join(os.getcwd(), '..', '.env.local'),
+    os.path.join(os.getcwd(), '.env.local'),
+]:
+    if os.path.exists(_try_path):
+        load_dotenv(_try_path)
+        break
+else:
+    load_dotenv()  # fallback to default
 
 # Site configuration
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:3000')
