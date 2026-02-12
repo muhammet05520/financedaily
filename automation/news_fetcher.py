@@ -88,7 +88,12 @@ def fetch_market_data() -> dict:
 def get_existing_titles() -> set:
     """Get titles of already published articles from database"""
     try:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'database', 'data.json')
+        import sys as _sys
+        if getattr(_sys, 'frozen', False):
+            _base = os.getcwd()
+        else:
+            _base = os.path.dirname(os.path.abspath(__file__))
+        db_path = os.path.join(_base, '..', 'database', 'data.json')
         with open(db_path, 'r', encoding='utf-8') as f:
             db = json.load(f)
         # Return set of lowercase title keywords for fuzzy matching

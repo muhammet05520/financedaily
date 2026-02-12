@@ -8,8 +8,13 @@ import hashlib
 import requests
 from urllib.parse import urlparse
 
-# Directory for article images
-IMAGES_DIR = os.path.join(os.path.dirname(__file__), '..', 'public', 'images', 'articles')
+# Directory for article images - works from both script and exe
+import sys
+if getattr(sys, 'frozen', False):
+    _base_dir = os.getcwd()  # gui_app.py sets cwd to automation dir
+else:
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+IMAGES_DIR = os.path.join(_base_dir, '..', 'public', 'images', 'articles')
 
 # Category-based fallback image keywords for Picsum
 CATEGORY_FALLBACKS = {

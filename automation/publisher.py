@@ -10,9 +10,15 @@ import subprocess
 from datetime import datetime
 from config import CATEGORIES
 
-# Path to the local database
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'database', 'data.json')
-PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
+# Path to the local database - works from both script and exe
+import sys
+if getattr(sys, 'frozen', False):
+    _script_dir = os.getcwd()  # gui_app.py sets cwd to automation dir
+else:
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(_script_dir, '..', 'database', 'data.json')
+PROJECT_ROOT = os.path.join(_script_dir, '..')
 
 
 def load_database() -> dict:

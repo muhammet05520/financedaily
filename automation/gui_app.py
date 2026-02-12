@@ -19,19 +19,32 @@ from tkinter import ttk, scrolledtext, messagebox
 if getattr(sys, 'frozen', False):
     # Running as compiled exe
     exe_dir = os.path.dirname(sys.executable)
-    # Look for automation folder - exe might be in automation/dist, automation, or desktop
+    # Look for automation folder - exe might be in various locations
     possible_paths = [
-        os.path.join(exe_dir, '..'),           # exe is in automation/dist
-        exe_dir,                                 # exe is in automation
-        os.path.join(exe_dir, 'automation'),     # exe is next to automation folder
-        os.path.join(exe_dir, '..', 'automation'),  # exe is on desktop
+        os.path.join(exe_dir, '..'),                          # exe is in automation/dist
+        exe_dir,                                               # exe is in automation
+        os.path.join(exe_dir, 'automation'),                   # exe is in project root
+        os.path.join(exe_dir, 'financedaily', 'automation'),   # exe is on desktop, project is financedaily/
+        os.path.join(exe_dir, '..', 'automation'),             # exe is one level above
     ]
+    AUTOMATION_DIR = None
     for p in possible_paths:
         if os.path.exists(os.path.join(p, 'config.py')):
             AUTOMATION_DIR = os.path.abspath(p)
             break
-    else:
-        AUTOMATION_DIR = exe_dir
+    
+    if not AUTOMATION_DIR:
+        # Last resort: search common locations
+        for base in [
+            os.path.expanduser('~\\Desktop\\financedaily\\automation'),
+            os.path.expanduser('~\\financedaily\\automation'),
+            'C:\\financedaily\\automation',
+        ]:
+            if os.path.exists(os.path.join(base, 'config.py')):
+                AUTOMATION_DIR = os.path.abspath(base)
+                break
+        else:
+            AUTOMATION_DIR = exe_dir
 else:
     AUTOMATION_DIR = os.path.dirname(os.path.abspath(__file__))
 
