@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Breadcrumb from '@/components/Breadcrumb';
 import ArticleCard from '@/components/ArticleCard';
-
+import ArticleImage from '@/components/ArticleImage';
 import { getArticleBySlug, getRelatedArticles, getTrendingArticles, getAllSlugs } from '@/lib/db';
 import { formatDate, timeAgo } from '@/lib/utils';
 import type { Article, Comment } from '@/types';
@@ -159,11 +159,16 @@ export default function ArticlePage({ params }: PageProps) {
             </div>
 
             {/* Featured image */}
-            {article.featured_image && (
-              <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden mb-8">
-                <img src={article.featured_image} alt={article.title} className="w-full h-full object-cover" />
-              </div>
-            )}
+            <div className="aspect-video rounded-xl overflow-hidden mb-8">
+              <ArticleImage
+                src={article.featured_image}
+                alt={article.title}
+                categoryId={article.category_id}
+                categoryName={article.category_name}
+                className="w-full h-full"
+                iconSize="lg"
+              />
+            </div>
 
             {/* Article content with embedded ads */}
             <div
