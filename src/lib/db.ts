@@ -32,21 +32,35 @@ function loadData(): DbData {
   try {
     if (fs.existsSync(DB_PATH)) {
       const raw = fs.readFileSync(DB_PATH, 'utf-8');
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Only return if it has valid structure
+      if (parsed && parsed.categories) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error('Error loading db:', e);
   }
   
-  // Initialize with default data (no seed articles)
-  const data: DbData = {
+  // Only initialize if file truly doesn't exist
+  if (!fs.existsSync(DB_PATH)) {
+    const data: DbData = {
+      categories: getDefaultCategories(),
+      articles: [],
+      tags: [],
+      nextArticleId: 1,
+    };
+    saveData(data);
+    return data;
+  }
+  
+  // Fallback: return empty structure without overwriting
+  return {
     categories: getDefaultCategories(),
     articles: [],
     tags: [],
     nextArticleId: 1,
   };
-  saveData(data);
-  return data;
 }
 
 function saveData(data: DbData): void {
