@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server';
 
-// Server-side cache
+// Server-side cache (persists across requests while function is warm)
 let cachedData: any = null;
 let lastFetch = 0;
 const CACHE_TTL = 15000; // 15 seconds cache
+
+// Fallback data shown immediately if no cache exists yet
+const FALLBACK_DATA = {
+  data: [
+    { symbol: 'S&P 500', price: '5,960', change: '+0.12%', up: true },
+    { symbol: 'NASDAQ', price: '19,280', change: '+0.08%', up: true },
+    { symbol: 'DOW', price: '43,850', change: '+0.15%', up: true },
+  ],
+  commodities: [
+    { symbol: 'GOLD', price: '$2,920', change: '+0.22%', up: true },
+    { symbol: 'OIL', price: '$71.50', change: '-0.35%', up: false },
+  ],
+  timestamp: new Date().toISOString(),
+  fallback: true,
+};
 
 async function fetchYahoo(symbol: string): Promise<{ price: number; change: number } | null> {
   try {
@@ -83,6 +98,10 @@ export async function GET() {
 
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ data: [], commodities: [], error: 'Failed to fetch' }, { status: 500 });
+    // Return cached data if available, otherwise fallback
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+    return NextResponse.json(FALLBACK_DATA);
   }
 }

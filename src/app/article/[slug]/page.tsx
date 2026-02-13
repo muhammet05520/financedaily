@@ -6,7 +6,7 @@ import ArticleCard from '@/components/ArticleCard';
 
 import { getArticleBySlug, getRelatedArticles, getTrendingArticles, getAllSlugs } from '@/lib/db';
 import { formatDate, timeAgo } from '@/lib/utils';
-import type { Article } from '@/types';
+import type { Article, Comment } from '@/types';
 
 interface PageProps {
   params: { slug: string };
@@ -194,6 +194,43 @@ export default function ArticlePage({ params }: PageProps) {
                     {tag.trim()}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Comments Section */}
+            {article.comments && article.comments.length > 0 && (
+              <div className="mt-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1.5 h-7 bg-primary-600 rounded-full" />
+                  <h2 className="text-xl font-bold text-gray-900">Comments ({article.comments.length})</h2>
+                </div>
+                <div className="space-y-4">
+                  {article.comments.map((comment: Comment) => (
+                    <div key={comment.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                          style={{ backgroundColor: comment.avatar_color || '#3b82f6' }}
+                        >
+                          {comment.name?.charAt(0) || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{comment.name}</p>
+                          <p className="text-xs text-gray-400">{timeAgo(comment.date)}</p>
+                        </div>
+                        {comment.likes > 0 && (
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                            </svg>
+                            {comment.likes}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed pl-12">{comment.text}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

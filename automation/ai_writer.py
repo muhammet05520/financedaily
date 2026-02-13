@@ -136,6 +136,88 @@ Return ONLY valid JSON."""
         }
 
 
+def generate_comments(client, article_title: str, article_excerpt: str, category_name: str) -> list:
+    """
+    Generate 3-20 realistic comments for an article.
+    ~70% topic-related, ~30% site-praising (natural tone).
+    """
+    import random
+    count = random.randint(3, 20)
+    praise_count = max(1, round(count * 0.3))
+    topic_count = count - praise_count
+
+    try:
+        prompt = f"""Generate {count} realistic reader comments for this finance article.
+
+ARTICLE TITLE: {article_title}
+ARTICLE SUMMARY: {article_excerpt}
+CATEGORY: {category_name}
+
+RULES:
+1. Generate exactly {topic_count} comments about the article topic (analysis, opinions, questions, insights)
+2. Generate exactly {praise_count} comments that subtly appreciate the site/content quality (NOT "I love this site" — be natural and varied, like "Been following this coverage for a while, always solid analysis" or "This is the kind of breakdown other sites miss" or "Finally a finance site that explains things clearly")
+3. Each comment must be 1-3 sentences, casual but intelligent tone
+4. Vary the writing style — some short and punchy, some longer and thoughtful
+5. Mix of agreement, mild disagreement, questions, and personal experience
+6. Never mention "FinanceDaily" by name — just say "this site", "here", "you guys" etc.
+7. Make them sound like real people, not bots
+
+Return as JSON array of objects:
+[{{"name": "First Last", "text": "comment text"}}]
+
+Use diverse American/English names. Return ONLY valid JSON array, no markdown."""
+
+        response = client.chat.completions.create(
+            model=AI_MODEL,
+            messages=[
+                {"role": "system", "content": "Generate realistic website comments. Respond with valid JSON array only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.9,
+            max_tokens=1500,
+        )
+
+        content = response.choices[0].message.content.strip()
+        if content.startswith('```'):
+            content = re.sub(r'^```(?:json)?\s*', '', content)
+            content = re.sub(r'\s*```$', '', content)
+
+        import json
+        comments = json.loads(content)
+
+        # Add metadata to each comment
+        avatar_colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1']
+        result = []
+        for i, c in enumerate(comments):
+            # Random date within last 7 days
+            from datetime import datetime, timedelta
+            days_ago = random.randint(0, 6)
+            hours_ago = random.randint(0, 23)
+            comment_date = datetime.now() - timedelta(days=days_ago, hours=hours_ago)
+
+            result.append({
+                'id': i + 1,
+                'name': c.get('name', f'Reader {i+1}'),
+                'text': c.get('text', ''),
+                'avatar_color': random.choice(avatar_colors),
+                'date': comment_date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+                'likes': random.randint(0, 45),
+            })
+
+        # Sort by date (newest first)
+        result.sort(key=lambda x: x['date'], reverse=True)
+        # Re-assign IDs
+        for i, c in enumerate(result):
+            c['id'] = i + 1
+
+        print(f"  ✓ Generated {len(result)} comments ({topic_count} topic + {praise_count} praise)")
+        return result
+
+    except Exception as e:
+        print(f"  [!] Comment generation error: {e}")
+        return []
+
+
 def enhance_without_ai(news_item: dict, category_name: str) -> dict:
     """
     Create an enhanced article without AI when API key is not available.

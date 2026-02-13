@@ -1,3 +1,12 @@
+export interface Comment {
+  id: number;
+  name: string;
+  text: string;
+  avatar_color: string;
+  date: string;
+  likes: number;
+}
+
 export interface Article {
   id: number;
   title: string;
@@ -15,6 +24,7 @@ export interface Article {
   views: number;
   source_url: string;
   reading_time: number;
+  comments?: Comment[];
   created_at: string;
   updated_at: string;
   category_name?: string;

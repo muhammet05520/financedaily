@@ -120,6 +120,7 @@ def publish_article(article_data: dict, category_id: int = None) -> bool:
             'reading_time': estimate_reading_time(article_data['content']),
             'source_url': article_data.get('source_url', ''),
             'views': random.randint(1200, 100000),
+            'comments': article_data.get('comments', []),
             'created_at': now,
             'updated_at': now,
         }
