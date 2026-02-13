@@ -68,47 +68,35 @@ function LiveMarketSummary() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch stocks and commodities
-        const stockRes = await fetch('/api/market-data');
-        const stockData = await stockRes.json();
-
-        // Fetch crypto
-        const cryptoRes = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true'
-        );
-        const cryptoData = await cryptoRes.json();
+        // Single API call - server handles Binance crypto + Yahoo stocks
+        const res = await fetch('/api/market-data');
+        const data = await res.json();
 
         const items: { name: string; price: string; change: string; up: boolean }[] = [];
 
         // Stocks
-        if (stockData.data) {
-          for (const item of stockData.data) {
+        if (data.data) {
+          for (const item of data.data) {
             items.push({ name: item.symbol, price: item.price, change: item.change, up: item.up });
           }
         }
 
-        // Crypto
-        const cryptos = [
-          { id: 'bitcoin', label: 'Bitcoin' },
-          { id: 'ethereum', label: 'Ethereum' },
-          { id: 'solana', label: 'Solana' },
-        ];
-        for (const c of cryptos) {
-          if (cryptoData[c.id]) {
-            const p = cryptoData[c.id].usd;
-            const ch = cryptoData[c.id].usd_24h_change || 0;
+        // Crypto from Binance (via server)
+        if (data.crypto) {
+          const cryptoLabels: Record<string, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana' };
+          for (const item of data.crypto) {
             items.push({
-              name: c.label,
-              price: `$${p.toLocaleString('en-US', { maximumFractionDigits: p > 100 ? 0 : 2 })}`,
-              change: `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`,
-              up: ch >= 0,
+              name: cryptoLabels[item.symbol] || item.symbol,
+              price: item.price,
+              change: item.change,
+              up: item.up,
             });
           }
         }
 
         // Commodities
-        if (stockData.commodities) {
-          for (const item of stockData.commodities) {
+        if (data.commodities) {
+          for (const item of data.commodities) {
             items.push({ name: item.symbol === 'GOLD' ? 'Gold' : 'Crude Oil', price: item.price, change: item.change, up: item.up });
           }
         }
@@ -122,7 +110,7 @@ function LiveMarketSummary() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000); // 30 seconds
+    const interval = setInterval(fetchData, 10000); // 10 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -160,7 +148,7 @@ function LiveMarketSummary() {
           ))
         )}
       </div>
-      <p className="text-2xs text-gray-400 mt-3">Data updates every 30s. May be delayed up to 15 min.</p>
+      <p className="text-2xs text-gray-400 mt-3">Crypto: Binance (real-time) · Stocks: Yahoo Finance</p>
     </div>
   );
 }

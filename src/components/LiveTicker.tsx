@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface MarketData {
   symbol: string;
@@ -9,94 +9,131 @@ interface MarketData {
   up: boolean;
 }
 
-const SYMBOLS = [
-  { id: '^GSPC', label: 'S&P 500' },
-  { id: '^IXIC', label: 'NASDAQ' },
-  { id: '^DJI', label: 'DOW' },
-];
-
-const CRYPTO_IDS = 'bitcoin,ethereum';
-
 export default function LiveTicker() {
-  const [markets, setMarkets] = useState<MarketData[]>([]);
+  const [stockData, setStockData] = useState<MarketData[]>([]);
+  const [cryptoData, setCryptoData] = useState<Record<string, MarketData>>({});
   const [lastUpdate, setLastUpdate] = useState<string>('');
+  const [wsLive, setWsLive] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  const fetchPrices = async () => {
-    try {
-      // Fetch crypto from CoinGecko (free, no key needed)
-      const cryptoRes = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'
-      );
-      const cryptoData = await cryptoRes.json();
-
-      // Fetch stocks/commodities from our API route
-      const stockRes = await fetch('/api/market-data');
-      const stockData = await stockRes.json();
-
-      const newMarkets: MarketData[] = [];
-
-      // Stock data from our API
-      if (stockData.data) {
-        for (const item of stockData.data) {
-          newMarkets.push({
-            symbol: item.symbol,
-            price: item.price,
-            change: item.change,
-            up: item.up,
-          });
-        }
-      }
-
-      // Bitcoin
-      if (cryptoData.bitcoin) {
-        const btcPrice = cryptoData.bitcoin.usd;
-        const btcChange = cryptoData.bitcoin.usd_24h_change || 0;
-        newMarkets.push({
-          symbol: 'BTC',
-          price: `$${btcPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-          change: `${btcChange >= 0 ? '+' : ''}${btcChange.toFixed(2)}%`,
-          up: btcChange >= 0,
-        });
-      }
-
-      // Ethereum
-      if (cryptoData.ethereum) {
-        const ethPrice = cryptoData.ethereum.usd;
-        const ethChange = cryptoData.ethereum.usd_24h_change || 0;
-        newMarkets.push({
-          symbol: 'ETH',
-          price: `$${ethPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-          change: `${ethChange >= 0 ? '+' : ''}${ethChange.toFixed(2)}%`,
-          up: ethChange >= 0,
-        });
-      }
-
-      // Add gold and oil from stock data if available
-      if (stockData.commodities) {
-        for (const item of stockData.commodities) {
-          newMarkets.push({
-            symbol: item.symbol,
-            price: item.price,
-            change: item.change,
-            up: item.up,
-          });
-        }
-      }
-
-      if (newMarkets.length > 0) {
-        setMarkets(newMarkets);
-        setLastUpdate(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
-      }
-    } catch (error) {
-      console.error('Failed to fetch market data:', error);
-    }
-  };
-
+  // Fetch stocks + commodities + crypto fallback from server API
   useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 2000); // 2 seconds
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/market-data');
+        const data = await res.json();
+
+        const items: MarketData[] = [];
+
+        // Stocks: S&P 500, NASDAQ, DOW
+        if (data.data) {
+          for (const item of data.data) {
+            items.push({ symbol: item.symbol, price: item.price, change: item.change, up: item.up });
+          }
+        }
+
+        // Commodities: GOLD, OIL
+        if (data.commodities) {
+          for (const item of data.commodities) {
+            items.push({ symbol: item.symbol, price: item.price, change: item.change, up: item.up });
+          }
+        }
+
+        setStockData(items);
+
+        // Use API crypto data only as initial/fallback (don't overwrite WebSocket data)
+        if (data.crypto) {
+          setCryptoData(prev => {
+            const updated = { ...prev };
+            for (const item of data.crypto) {
+              if (!updated[item.symbol]) {
+                updated[item.symbol] = item;
+              }
+            }
+            return updated;
+          });
+        }
+
+        setLastUpdate(
+          new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        );
+      } catch (e) {
+        console.error('Market data fetch error:', e);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // stocks refresh every 5s
     return () => clearInterval(interval);
   }, []);
+
+  // Binance WebSocket for REAL-TIME crypto (BTC + ETH)
+  useEffect(() => {
+    const connect = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      const ws = new WebSocket(
+        'wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker'
+      );
+
+      ws.onopen = () => {
+        setWsLive(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const { data } = JSON.parse(event.data);
+          if (!data) return;
+
+          const symbolMap: Record<string, string> = { BTCUSDT: 'BTC', ETHUSDT: 'ETH' };
+          const symbol = symbolMap[data.s];
+          if (!symbol) return;
+
+          const price = parseFloat(data.c);
+          const changePercent = parseFloat(data.P);
+
+          setCryptoData(prev => ({
+            ...prev,
+            [symbol]: {
+              symbol,
+              price: `$${price.toLocaleString('en-US', { maximumFractionDigits: price > 100 ? 0 : 2 })}`,
+              change: `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`,
+              up: changePercent >= 0,
+            },
+          }));
+
+          setLastUpdate(
+            new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          );
+        } catch {}
+      };
+
+      ws.onclose = () => {
+        setWsLive(false);
+        reconnectTimer.current = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => ws.close();
+      wsRef.current = ws;
+    };
+
+    connect();
+
+    return () => {
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (wsRef.current) {
+        wsRef.current.onclose = null; // prevent reconnect on cleanup
+        wsRef.current.close();
+      }
+    };
+  }, []);
+
+  // Build final list: S&P 500, NASDAQ, DOW, BTC, ETH, GOLD, OIL
+  const stocks = stockData.filter(s => ['S&P 500', 'NASDAQ', 'DOW'].includes(s.symbol));
+  const commodities = stockData.filter(s => ['GOLD', 'OIL'].includes(s.symbol));
+  const cryptoList = ['BTC', 'ETH'].map(s => cryptoData[s]).filter(Boolean) as MarketData[];
+  const markets = [...stocks, ...cryptoList, ...commodities];
 
   return (
     <div className="bg-primary-900 text-white">
@@ -124,7 +161,11 @@ export default function LiveTicker() {
             )}
           </div>
           <div className="hidden md:flex items-center gap-3 text-gray-400 shrink-0">
-            {lastUpdate && <span className="text-2xs">Live</span>}
+            {lastUpdate && (
+              <span className={`text-2xs font-medium ${wsLive ? 'text-green-400' : 'text-yellow-400'}`}>
+                {wsLive ? '● LIVE' : '● UPDATING'}
+              </span>
+            )}
             <span className="hidden lg:inline">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
