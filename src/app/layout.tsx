@@ -80,14 +80,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
         {/* AdSense Script */}
-        {adsenseId && adsenseId !== 'ca-pub-XXXXXXXXXXXXXXXX' && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1068181276022573"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
 
         {/* Google Analytics placeholder */}
         {/* 
