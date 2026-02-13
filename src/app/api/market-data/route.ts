@@ -3,18 +3,18 @@ import { NextResponse } from 'next/server';
 // Server-side cache (persists across requests while function is warm)
 let cachedData: any = null;
 let lastFetch = 0;
-const CACHE_TTL = 15000; // 15 seconds cache
+const CACHE_TTL = 5000; // 5 seconds cache for fresher prices
 
-// Fallback data shown immediately if no cache exists yet
+// Fallback data only used when API completely fails and no cache
 const FALLBACK_DATA = {
   data: [
-    { symbol: 'S&P 500', price: '5,960', change: '+0.12%', up: true },
-    { symbol: 'NASDAQ', price: '19,280', change: '+0.08%', up: true },
-    { symbol: 'DOW', price: '43,850', change: '+0.15%', up: true },
+    { symbol: 'S&P 500', price: '--', change: '--', up: true },
+    { symbol: 'NASDAQ', price: '--', change: '--', up: true },
+    { symbol: 'DOW', price: '--', change: '--', up: true },
   ],
   commodities: [
-    { symbol: 'GOLD', price: '$2,920', change: '+0.22%', up: true },
-    { symbol: 'OIL', price: '$71.50', change: '-0.35%', up: false },
+    { symbol: 'GOLD', price: '--', change: '--', up: true },
+    { symbol: 'OIL', price: '--', change: '--', up: false },
   ],
   timestamp: new Date().toISOString(),
   fallback: true,

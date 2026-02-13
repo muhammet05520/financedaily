@@ -18,16 +18,7 @@ const SYMBOLS = [
 const CRYPTO_IDS = 'bitcoin,ethereum';
 
 export default function LiveTicker() {
-  // Start with approximate fallback prices so something shows immediately
-  const [markets, setMarkets] = useState<MarketData[]>([
-    { symbol: 'S&P 500', price: '5,960', change: '+0.12%', up: true },
-    { symbol: 'NASDAQ', price: '19,280', change: '+0.08%', up: true },
-    { symbol: 'DOW', price: '43,850', change: '+0.15%', up: true },
-    { symbol: 'BTC', price: '$97,500', change: '+1.20%', up: true },
-    { symbol: 'ETH', price: '$2,680', change: '+0.85%', up: true },
-    { symbol: 'GOLD', price: '$2,920', change: '+0.22%', up: true },
-    { symbol: 'OIL', price: '$71.50', change: '-0.35%', up: false },
-  ]);
+  const [markets, setMarkets] = useState<MarketData[]>([]);
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
   const fetchPrices = async () => {
@@ -112,15 +103,25 @@ export default function LiveTicker() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-8 text-xs">
           <div className="flex items-center gap-4 md:gap-6 overflow-x-auto scrollbar-hide">
-            {markets.map((m, i) => (
-              <div key={m.symbol} className={`flex items-center gap-1.5 whitespace-nowrap ${i >= 5 ? 'hidden lg:flex' : i >= 4 ? 'hidden md:flex' : i >= 3 ? 'hidden sm:flex' : ''}`}>
-                <span className="font-medium text-gray-300">{m.symbol}</span>
-                <span className="text-white">{m.price}</span>
-                <span className={m.up ? 'text-green-400' : 'text-red-400'}>
-                  {m.up ? '▲' : '▼'} {m.change}
-                </span>
-              </div>
-            ))}
+            {markets.length === 0 ? (
+              // Loading skeleton
+              ['S&P 500', 'NASDAQ', 'DOW', 'BTC', 'ETH', 'GOLD', 'OIL'].map((name, i) => (
+                <div key={name} className={`flex items-center gap-1.5 whitespace-nowrap ${i >= 5 ? 'hidden lg:flex' : i >= 4 ? 'hidden md:flex' : i >= 3 ? 'hidden sm:flex' : ''}`}>
+                  <span className="font-medium text-gray-300">{name}</span>
+                  <span className="text-gray-500 animate-pulse">loading</span>
+                </div>
+              ))
+            ) : (
+              markets.map((m, i) => (
+                <div key={m.symbol} className={`flex items-center gap-1.5 whitespace-nowrap ${i >= 5 ? 'hidden lg:flex' : i >= 4 ? 'hidden md:flex' : i >= 3 ? 'hidden sm:flex' : ''}`}>
+                  <span className="font-medium text-gray-300">{m.symbol}</span>
+                  <span className="text-white">{m.price}</span>
+                  <span className={m.up ? 'text-green-400' : 'text-red-400'}>
+                    {m.up ? '▲' : '▼'} {m.change}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
           <div className="hidden md:flex items-center gap-3 text-gray-400 shrink-0">
             {lastUpdate && <span className="text-2xs">Live</span>}

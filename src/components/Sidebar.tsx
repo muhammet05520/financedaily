@@ -62,16 +62,8 @@ export default function Sidebar({ trendingArticles }: SidebarProps) {
 }
 
 function LiveMarketSummary() {
-  // Start with fallback data so something shows immediately
-  const [markets, setMarkets] = useState<{ name: string; price: string; change: string; up: boolean }[]>([
-    { name: 'S&P 500', price: '5,960', change: '+0.12%', up: true },
-    { name: 'NASDAQ', price: '19,280', change: '+0.08%', up: true },
-    { name: 'DOW', price: '43,850', change: '+0.15%', up: true },
-    { name: 'Bitcoin', price: '$97,500', change: '+1.20%', up: true },
-    { name: 'Ethereum', price: '$2,680', change: '+0.85%', up: true },
-    { name: 'Gold', price: '$2,920', change: '+0.22%', up: true },
-  ]);
-  const [loading, setLoading] = useState(false);
+  const [markets, setMarkets] = useState<{ name: string; price: string; change: string; up: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
