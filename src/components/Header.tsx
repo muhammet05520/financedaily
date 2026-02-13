@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import LiveTicker from './LiveTicker';
 
 const categories = [
   { name: 'Markets', slug: 'markets' },
@@ -20,25 +21,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      {/* Top ticker bar */}
-      <div className="bg-primary-900 text-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-8 text-xs">
-            <div className="flex items-center gap-4 md:gap-6 overflow-x-auto scrollbar-hide">
-              <MarketTicker symbol="S&P 500" value="5,234.18" change="+0.85%" up={true} />
-              <MarketTicker symbol="NASDAQ" value="16,742.39" change="+1.12%" up={true} />
-              <MarketTicker symbol="DOW" value="39,142.67" change="-0.23%" up={false} />
-              <MarketTicker symbol="BTC" value="$101,234" change="+2.45%" up={true} />
-              <span className="hidden sm:inline-flex items-center gap-1.5"><MarketTicker symbol="ETH" value="$3,891" change="+1.87%" up={true} /></span>
-              <span className="hidden md:inline-flex items-center gap-1.5"><MarketTicker symbol="GOLD" value="$2,089" change="+0.34%" up={true} /></span>
-              <span className="hidden lg:inline-flex items-center gap-1.5"><MarketTicker symbol="OIL" value="$78.42" change="-1.12%" up={false} /></span>
-            </div>
-            <div className="hidden md:flex items-center gap-3 text-gray-400">
-              <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Live ticker bar */}
+      <LiveTicker />
 
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4">
@@ -168,17 +152,5 @@ export default function Header() {
         </div>
       )}
     </header>
-  );
-}
-
-function MarketTicker({ symbol, value, change, up }: { symbol: string; value: string; change: string; up: boolean }) {
-  return (
-    <div className="flex items-center gap-1.5 whitespace-nowrap">
-      <span className="font-medium text-gray-300">{symbol}</span>
-      <span className="text-white">{value}</span>
-      <span className={up ? 'text-green-400' : 'text-red-400'}>
-        {up ? '▲' : '▼'} {change}
-      </span>
-    </div>
   );
 }

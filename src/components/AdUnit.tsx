@@ -10,7 +10,7 @@ interface AdUnitProps {
 }
 
 export default function AdUnit({ slot, format = 'responsive', className = '', label = true }: AdUnitProps) {
-  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
+  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID || 'ca-pub-1068181276022573';
 
   useEffect(() => {
     try {

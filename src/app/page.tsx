@@ -10,13 +10,14 @@ export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const allArticles = getArticles({ limit: 20 }) as Article[];
-  const featuredArticles = getArticles({ featured: true, limit: 3 }) as Article[];
   const trendingArticles = getTrendingArticles(5) as Article[];
   const categories = getCategories() as Category[];
   
+  // Use latest articles as featured (first 3)
+  const featuredArticles = allArticles.slice(0, 3);
   const mainFeatured = featuredArticles[0];
   const secondaryFeatured = featuredArticles.slice(1, 3);
-  const latestArticles = allArticles.filter(a => !featuredArticles.find(f => f.id === a.id)).slice(0, 9);
+  const latestArticles = allArticles.slice(3, 12);
 
   return (
     <div className="min-h-screen">

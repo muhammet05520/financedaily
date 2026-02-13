@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import ArticleCard from './ArticleCard';
 import { SidebarAd } from './AdUnit';
 import type { Article } from '@/types';
@@ -56,38 +57,112 @@ export default function Sidebar({ trendingArticles }: SidebarProps) {
       {/* Second ad slot */}
       <SidebarAd />
 
-      {/* Market Summary */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-2 h-5 bg-primary-600 rounded-full" />
-          <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider">Market Summary</h3>
-        </div>
-        <div className="space-y-3">
-          <MarketRow name="S&P 500" value="5,234.18" change="+0.85%" up={true} />
-          <MarketRow name="NASDAQ" value="16,742.39" change="+1.12%" up={true} />
-          <MarketRow name="DOW 30" value="39,142.67" change="-0.23%" up={false} />
-          <MarketRow name="Bitcoin" value="$101,234" change="+2.45%" up={true} />
-          <MarketRow name="Gold" value="$2,089.50" change="+0.34%" up={true} />
-          <MarketRow name="Crude Oil" value="$78.42" change="-1.12%" up={false} />
-        </div>
-        <p className="text-2xs text-gray-400 mt-3">Data may be delayed. See disclaimer.</p>
-      </div>
+      {/* Market Summary - Live Data */}
+      <LiveMarketSummary />
     </aside>
   );
 }
 
-function MarketRow({ name, value, change, up }: { name: string; value: string; change: string; up: boolean }) {
+function LiveMarketSummary() {
+  const [markets, setMarkets] = useState<{ name: string; price: string; change: string; up: boolean }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch stocks and commodities
+        const stockRes = await fetch('/api/market-data');
+        const stockData = await stockRes.json();
+
+        // Fetch crypto
+        const cryptoRes = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true'
+        );
+        const cryptoData = await cryptoRes.json();
+
+        const items: { name: string; price: string; change: string; up: boolean }[] = [];
+
+        // Stocks
+        if (stockData.data) {
+          for (const item of stockData.data) {
+            items.push({ name: item.symbol, price: item.price, change: item.change, up: item.up });
+          }
+        }
+
+        // Crypto
+        const cryptos = [
+          { id: 'bitcoin', label: 'Bitcoin' },
+          { id: 'ethereum', label: 'Ethereum' },
+          { id: 'solana', label: 'Solana' },
+        ];
+        for (const c of cryptos) {
+          if (cryptoData[c.id]) {
+            const p = cryptoData[c.id].usd;
+            const ch = cryptoData[c.id].usd_24h_change || 0;
+            items.push({
+              name: c.label,
+              price: `$${p.toLocaleString('en-US', { maximumFractionDigits: p > 100 ? 0 : 2 })}`,
+              change: `${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%`,
+              up: ch >= 0,
+            });
+          }
+        }
+
+        // Commodities
+        if (stockData.commodities) {
+          for (const item of stockData.commodities) {
+            items.push({ name: item.symbol === 'GOLD' ? 'Gold' : 'Crude Oil', price: item.price, change: item.change, up: item.up });
+          }
+        }
+
+        setMarkets(items);
+      } catch (e) {
+        console.error('Market data error:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-      <span className="text-sm font-medium text-gray-700">{name}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-900 font-medium">{value}</span>
-        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-          up ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
-        }`}>
-          {change}
-        </span>
+    <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-2 h-5 bg-primary-600 rounded-full" />
+        <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider">Market Summary</h3>
+        <span className="ml-auto text-2xs text-green-500 font-medium">● LIVE</span>
       </div>
+      <div className="space-y-3">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 animate-pulse">
+              <div className="h-4 bg-gray-100 rounded w-20" />
+              <div className="flex gap-2">
+                <div className="h-4 bg-gray-100 rounded w-16" />
+                <div className="h-4 bg-gray-100 rounded w-12" />
+              </div>
+            </div>
+          ))
+        ) : (
+          markets.map((m) => (
+            <div key={m.name} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+              <span className="text-sm font-medium text-gray-700">{m.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-900 font-medium">{m.price}</span>
+                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                  m.up ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
+                }`}>
+                  {m.change}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      <p className="text-2xs text-gray-400 mt-3">Data updates every 30s. May be delayed up to 15 min.</p>
     </div>
   );
 }
