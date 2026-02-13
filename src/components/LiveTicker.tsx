@@ -102,7 +102,7 @@ export default function LiveTicker() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 20000); // 20 seconds
+    const interval = setInterval(fetchPrices, 2000); // 2 seconds
     return () => clearInterval(interval);
   }, []);
 

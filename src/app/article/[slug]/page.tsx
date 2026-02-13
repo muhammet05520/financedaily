@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Breadcrumb from '@/components/Breadcrumb';
 import ArticleCard from '@/components/ArticleCard';
-import { SidebarAd, InArticleAd, LeaderboardAd } from '@/components/AdUnit';
+
 import { getArticleBySlug, getRelatedArticles, getTrendingArticles, getAllSlugs } from '@/lib/db';
 import { formatDate, timeAgo } from '@/lib/utils';
 import type { Article } from '@/types';
@@ -171,8 +171,7 @@ export default function ArticlePage({ params }: PageProps) {
               dangerouslySetInnerHTML={{ __html: contentWithAds }}
             />
 
-            {/* Post-article ad */}
-            <InArticleAd className="mt-8" />
+
 
             {/* Share buttons */}
             <div className="flex items-center gap-3 py-6 border-t border-gray-100 mt-8">
@@ -216,8 +215,6 @@ export default function ArticlePage({ params }: PageProps) {
 
           {/* Sidebar */}
           <aside className="lg:col-span-1 space-y-6">
-            {/* Ad */}
-            <SidebarAd />
 
             {/* Trending */}
             <div className="bg-white rounded-xl border border-gray-100 p-5">
@@ -253,45 +250,16 @@ export default function ArticlePage({ params }: PageProps) {
               </form>
             </div>
 
-            {/* Second ad */}
-            <SidebarAd />
           </aside>
         </div>
       </div>
 
-      {/* Bottom leaderboard */}
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <LeaderboardAd />
-      </div>
     </>
   );
 }
 
 function insertAdsIntoContent(content: string): string {
-  // Insert ad placeholder after every 3rd paragraph
-  const paragraphs = content.split('</p>');
-  const result: string[] = [];
-  
-  paragraphs.forEach((p, i) => {
-    result.push(p + (p.trim() ? '</p>' : ''));
-    
-    // Insert ad after every 3rd paragraph (but not at the very end)
-    if ((i + 1) % 3 === 0 && i < paragraphs.length - 2) {
-      result.push(`
-        <div class="ad-container my-6">
-          <span class="block text-center text-gray-400 text-2xs uppercase tracking-wider mb-1">Advertisement</span>
-          <div class="min-h-[100px] w-full bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
-            <div class="text-center p-4">
-              <div class="text-gray-300 text-sm font-medium">Ad Space</div>
-              <div class="text-gray-300 text-xs mt-1">in-article</div>
-            </div>
-          </div>
-        </div>
-      `);
-    }
-  });
-
-  return result.join('');
+  return content;
 }
 
 function ShareButton({ platform, article }: { platform: string; article: Article }) {

@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 
+// Server-side cache
+let cachedData: any = null;
+let lastFetch = 0;
+const CACHE_TTL = 15000; // 15 seconds cache
+
 async function fetchYahoo(symbol: string): Promise<{ price: number; change: number } | null> {
   try {
     const res = await fetch(
@@ -25,6 +30,12 @@ async function fetchYahoo(symbol: string): Promise<{ price: number; change: numb
 
 export async function GET() {
   try {
+    // Return cached if fresh
+    const now = Date.now();
+    if (cachedData && now - lastFetch < CACHE_TTL) {
+      return NextResponse.json(cachedData);
+    }
+
     const stockSymbols = [
       { id: '^GSPC', label: 'S&P 500' },
       { id: '^IXIC', label: 'NASDAQ' },
@@ -60,11 +71,17 @@ export async function GET() {
       })),
     ]);
 
-    return NextResponse.json({
+    const result = {
       data: stockResults.filter(Boolean),
       commodities: commodityResults.filter(Boolean),
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    // Cache it
+    cachedData = result;
+    lastFetch = Date.now();
+
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ data: [], commodities: [], error: 'Failed to fetch' }, { status: 500 });
   }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ArticleCard from './ArticleCard';
-import { SidebarAd } from './AdUnit';
+
 import type { Article } from '@/types';
 
 interface SidebarProps {
@@ -30,8 +30,7 @@ export default function Sidebar({ trendingArticles }: SidebarProps) {
         </div>
       </div>
 
-      {/* Ad slot */}
-      <SidebarAd />
+
 
       {/* Newsletter mini */}
       <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl p-5 text-white">
@@ -54,8 +53,7 @@ export default function Sidebar({ trendingArticles }: SidebarProps) {
         </form>
       </div>
 
-      {/* Second ad slot */}
-      <SidebarAd />
+
 
       {/* Market Summary - Live Data */}
       <LiveMarketSummary />

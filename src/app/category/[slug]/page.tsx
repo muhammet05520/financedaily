@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import ArticleCard from '@/components/ArticleCard';
 import Sidebar from '@/components/Sidebar';
 import Breadcrumb from '@/components/Breadcrumb';
-import { LeaderboardAd, InArticleAd } from '@/components/AdUnit';
+
 import { getArticles, getCategoryBySlug, getCategories, getTrendingArticles } from '@/lib/db';
 import type { Article, Category } from '@/types';
 
@@ -68,8 +68,7 @@ export default function CategoryPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Leaderboard Ad */}
-      <LeaderboardAd />
+
 
       {/* Articles grid + sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
@@ -84,7 +83,6 @@ export default function CategoryPage({ params }: PageProps) {
 
               {restArticles.length > 4 && (
                 <>
-                  <InArticleAd className="my-6" />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {restArticles.slice(4, 8).map((article) => (
                       <ArticleCard key={article.id} article={article} />
@@ -95,7 +93,6 @@ export default function CategoryPage({ params }: PageProps) {
 
               {restArticles.length > 8 && (
                 <>
-                  <InArticleAd className="my-6" />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {restArticles.slice(8).map((article) => (
                       <ArticleCard key={article.id} article={article} />

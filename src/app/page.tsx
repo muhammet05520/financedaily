@@ -2,7 +2,7 @@ import Link from 'next/link';
 import ArticleCard from '@/components/ArticleCard';
 import Sidebar from '@/components/Sidebar';
 import NewsletterSignup from '@/components/NewsletterSignup';
-import { LeaderboardAd, InArticleAd } from '@/components/AdUnit';
+
 import { getArticles, getTrendingArticles, getCategories } from '@/lib/db';
 import type { Article, Category } from '@/types';
 
@@ -73,11 +73,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Leaderboard Ad */}
-      <div className="max-w-7xl mx-auto px-4">
-        <LeaderboardAd />
-      </div>
-
       {/* Latest News + Sidebar */}
       <section className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -98,9 +93,6 @@ export default function HomePage() {
                 <ArticleCard key={article.id} article={article} />
               ))}
             </div>
-
-            {/* In-content ad */}
-            <InArticleAd className="my-6" />
 
             {/* More articles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -150,11 +142,6 @@ export default function HomePage() {
           </section>
         );
       })}
-
-      {/* Another ad section between categories and newsletter */}
-      <div className="max-w-7xl mx-auto px-4">
-        <LeaderboardAd />
-      </div>
 
       {/* Newsletter Section */}
       <section className="max-w-7xl mx-auto px-4 py-8">
