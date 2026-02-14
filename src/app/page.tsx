@@ -9,7 +9,7 @@ import type { Article, Category } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
-  const allArticles = getArticles({ limit: 20 }) as Article[];
+  const allArticles = getArticles({ limit: 50 }) as Article[];
   const trendingArticles = getTrendingArticles(5) as Article[];
   const categories = getCategories() as Category[];
   
@@ -17,7 +17,7 @@ export default function HomePage() {
   const featuredArticles = allArticles.slice(0, 3);
   const mainFeatured = featuredArticles[0];
   const secondaryFeatured = featuredArticles.slice(1, 3);
-  const latestArticles = allArticles.slice(3, 12);
+  const latestArticles = allArticles.slice(3, 20);
 
   return (
     <div className="min-h-screen">
@@ -80,8 +80,8 @@ export default function HomePage() {
             <div className="w-1.5 h-7 bg-primary-600 rounded-full" />
             <h2 className="text-xl font-bold text-gray-900">Latest News</h2>
           </div>
-          <Link href="/category/markets" className="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors">
-            View All →
+          <Link href="/articles" className="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors">
+            View All Articles →
           </Link>
         </div>
 
@@ -151,9 +151,14 @@ export default function HomePage() {
       {/* Bottom content section with more articles */}
       {latestArticles.length > 8 && (
         <section className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-1.5 h-7 bg-accent-gold rounded-full" />
-            <h2 className="text-xl font-bold text-gray-900">More Stories</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-7 bg-accent-gold rounded-full" />
+              <h2 className="text-xl font-bold text-gray-900">More Stories</h2>
+            </div>
+            <Link href="/articles" className="text-sm font-medium text-primary-600 hover:text-primary-800 transition-colors">
+              All Articles →
+            </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {latestArticles.slice(8).map((article) => (

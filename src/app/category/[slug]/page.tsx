@@ -41,7 +41,7 @@ export default function CategoryPage({ params }: PageProps) {
     notFound();
   }
 
-  const articles = getArticles({ categorySlug: params.slug, limit: 20 }) as Article[];
+  const articles = getArticles({ categorySlug: params.slug, limit: 100 }) as Article[];
   const trendingArticles = getTrendingArticles(5) as Article[];
   
   const featuredArticle = articles.find(a => a.is_featured) || articles[0];

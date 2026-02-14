@@ -104,6 +104,13 @@ export default function Header() {
       <nav className="border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="hidden md:flex items-center gap-1 h-11 overflow-x-auto scrollbar-hide">
+            <Link
+              href="/articles"
+              className="px-3 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-md whitespace-nowrap transition-colors"
+            >
+              All Articles
+            </Link>
+            <span className="text-gray-200">|</span>
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
@@ -138,6 +145,13 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white shadow-lg">
           <nav className="p-4 space-y-1">
+            <Link
+              href="/articles"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-4 py-2.5 text-sm font-bold text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              📰 All Articles
+            </Link>
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
