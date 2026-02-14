@@ -670,6 +670,8 @@ class AutomationApp:
         self._update_status(True)
         self.log("▶ Otomasyon başlatıldı!", "success")
         self.log(f"  Her {INTERVAL_HOURS} saatte bir çalışacak", "info")
+        self.log(f"  İlk çalışma {INTERVAL_HOURS} saat sonra başlayacak", "info")
+        self.log(f"  (Haber toplama sıfır noktası: şimdi)", "info")
         self.log("")
         self.automation_thread = threading.Thread(target=self._automation_loop, daemon=True)
         self.automation_thread.start()
@@ -708,10 +710,9 @@ class AutomationApp:
             self.root.after(0, _reset)
 
     def _automation_loop(self):
+        # İlk çalışmada da önce bekle — exe açıldığı andan itibaren haber toplamaya başla
         while self.is_running and not self.stop_event.is_set():
-            self._run_pipeline()
-            if not self.is_running or self.stop_event.is_set():
-                break
+            # Önce bekle, sonra çalıştır
             self.next_run_time = datetime.now() + timedelta(hours=INTERVAL_HOURS)
             self.log(f"💤 Sonraki çalışma: {self.next_run_time.strftime('%H:%M:%S')}", "info")
             self.log("")
@@ -721,6 +722,10 @@ class AutomationApp:
                 if self.stop_event.is_set():
                     return
                 time.sleep(1)
+            # Bekleme bitti, şimdi çalıştır
+            if not self.is_running or self.stop_event.is_set():
+                break
+            self._run_pipeline()
 
     # ─── Pipeline ─────────────────────────────────────────────
 
@@ -738,11 +743,12 @@ class AutomationApp:
                 f"Günlük {API_DAILY_LIMIT} istek limitine ulaşıldı. Yarın sıfırlanacak.")
             return
 
-        # Step 1: Fetch news
+        # Step 1: Fetch news (only from last INTERVAL_HOURS + 1 hour buffer)
         self.log("")
         self.log("1️⃣  Finansal haberler çekiliyor...", "step")
         try:
-            news_items = fetch_all_news()
+            hours_back = INTERVAL_HOURS + 1  # 2 saat interval + 1 saat buffer
+            news_items = fetch_all_news(hours_back=hours_back)
 
             # Track API calls (each topic = 1 API call)
             api_calls = len(NEWS_TOPICS)

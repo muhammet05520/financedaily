@@ -10,11 +10,14 @@ from datetime import datetime, timedelta
 from config import NEWS_API_KEY, FINNHUB_API_KEY, NEWS_TOPICS
 
 
-def fetch_news_from_newsapi(query: str, page_size: int = 5) -> list:
-    """Fetch news articles from NewsAPI.org"""
+def fetch_news_from_newsapi(query: str, page_size: int = 5, hours_back: int = 3) -> list:
+    """Fetch news articles from NewsAPI.org, only from the last N hours"""
     if not NEWS_API_KEY:
         print(f"  [!] NewsAPI key not configured, using placeholder for: {query}")
         return generate_placeholder_news(query)
+
+    # Only fetch news published after this time
+    from_time = (datetime.utcnow() - timedelta(hours=hours_back)).strftime('%Y-%m-%dT%H:%M:%S')
 
     url = 'https://newsapi.org/v2/everything'
     params = {
@@ -22,6 +25,7 @@ def fetch_news_from_newsapi(query: str, page_size: int = 5) -> list:
         'language': 'en',
         'sortBy': 'publishedAt',
         'pageSize': page_size,
+        'from': from_time,
         'apiKey': NEWS_API_KEY,
     }
 
@@ -126,10 +130,10 @@ def is_duplicate(title: str, existing_titles: set) -> bool:
             if key_phrase in existing or existing in key_phrase:
                 return True
     
-    # Check word overlap (if >70% words match, it's likely the same topic)
+    # Check word overlap (if >55% words match, it's likely the same topic)
     title_words = set(title_lower.split())
     # Remove common words
-    stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'as', 'by', 'with', 'from', 'its', 'it', 'this', 'that', 'how', 'why', 'what'}
+    stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'as', 'by', 'with', 'from', 'its', 'it', 'this', 'that', 'how', 'why', 'what', 'new', 'says', 'could', 'may', 'will'}
     title_words -= stop_words
     
     if len(title_words) >= 3:
@@ -138,20 +142,20 @@ def is_duplicate(title: str, existing_titles: set) -> bool:
             if len(existing_words) >= 3:
                 overlap = title_words & existing_words
                 similarity = len(overlap) / max(len(title_words), len(existing_words))
-                if similarity >= 0.7:
+                if similarity >= 0.55:
                     return True
     
     return False
 
 
-def fetch_all_news() -> list:
+def fetch_all_news(hours_back: int = 3) -> list:
     """Fetch news from all topics, filtering out already published articles"""
     all_news = []
-    print("\n📰 Fetching news from all topics...")
+    print(f"\n📰 Fetching news from last {hours_back} hours...")
 
     for topic in NEWS_TOPICS:
         print(f"  → Searching: {topic}")
-        news = fetch_news_from_newsapi(topic, page_size=3)
+        news = fetch_news_from_newsapi(topic, page_size=3, hours_back=hours_back)
         all_news.extend(news)
 
     # Remove duplicates based on title (within fetched news)

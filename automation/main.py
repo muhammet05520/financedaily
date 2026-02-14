@@ -51,9 +51,9 @@ def run_automation():
 
     print("   ✅ System ready (local JSON + GitHub deploy)")
 
-    # Step 2: Fetch news
+    # Step 2: Fetch news (only from last 3 hours)
     print("\n2️⃣  Fetching latest financial news...")
-    news_items = fetch_all_news()
+    news_items = fetch_all_news(hours_back=3)
 
     if not news_items:
         print("   ⚠️  No news items found. Skipping this run.")
