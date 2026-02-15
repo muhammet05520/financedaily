@@ -11,25 +11,26 @@
     "db:init": "node scripts/init-db.js"
   },
   "dependencies": {
+    "date-fns": "^3.6.0",
+    "gray-matter": "^4.0.3",
     "next": "^14.2.0",
+    "next-sitemap": "^4.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "next-sitemap": "^4.2.0",
-    "date-fns": "^3.6.0",
-    "reading-time": "^1.5.0",
-    "gray-matter": "^4.0.3"
+    "reading-time": "^1.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/line-clamp": "^0.4.0",
+    "@tailwindcss/typography": "^0.5.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.4.0",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.0",
     "autoprefixer": "^10.4.0",
-    "@tailwindcss/typography": "^0.5.0",
-    "@tailwindcss/line-clamp": "^0.4.0",
+    "canvas": "^3.2.1",
     "eslint": "^8.0.0",
-    "eslint-config-next": "^14.2.0"
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0"
   }
 }

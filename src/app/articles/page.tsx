@@ -10,8 +10,16 @@ import type { Article, Category } from '@/types';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'All Articles — FinanceDaily',
-  description: 'Browse all financial news, analysis, and market insights from FinanceDaily.',
+  title: 'All Financial News & Articles — FinanceDaily',
+  description: 'Browse all breaking financial news, stock market analysis, cryptocurrency updates, and investment insights. Hundreds of articles covering markets, crypto, economy, and personal finance.',
+  alternates: {
+    canonical: 'https://financedailyus.com/articles',
+  },
+  openGraph: {
+    title: 'All Financial News & Articles — FinanceDaily',
+    description: 'Browse all breaking financial news, stock market analysis, cryptocurrency updates, and investment insights.',
+    url: 'https://financedailyus.com/articles',
+  },
 };
 
 export default function ArticlesPage() {

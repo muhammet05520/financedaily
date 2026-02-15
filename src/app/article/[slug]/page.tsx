@@ -16,23 +16,46 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const article = getArticleBySlug(params.slug) as Article | undefined;
   if (!article) return { title: 'Article Not Found' };
 
+  const siteUrl = process.env.SITE_URL || 'https://financedailyus.com';
+  const articleUrl = `${siteUrl}/article/${article.slug}`;
+  const title = article.meta_title || article.title;
+  const description = article.meta_description || article.excerpt;
+  const images = article.featured_image
+    ? [{ url: article.featured_image, width: 1200, height: 630, alt: title }]
+    : [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630, alt: 'FinanceDaily' }];
+
   return {
-    title: article.meta_title || article.title,
-    description: article.meta_description || article.excerpt,
+    title,
+    description,
     keywords: article.meta_keywords?.split(',').map((k: string) => k.trim()),
+    alternates: {
+      canonical: articleUrl,
+    },
     openGraph: {
-      title: article.meta_title || article.title,
-      description: article.meta_description || article.excerpt,
+      title,
+      description,
       type: 'article',
+      url: articleUrl,
+      siteName: 'FinanceDaily',
       publishedTime: article.created_at,
       modifiedTime: article.updated_at,
       authors: [article.author],
-      images: article.featured_image ? [{ url: article.featured_image }] : [],
+      section: article.category_name,
+      tags: article.meta_keywords?.split(',').map((k: string) => k.trim()),
+      images,
     },
     twitter: {
       card: 'summary_large_image',
-      title: article.meta_title || article.title,
-      description: article.meta_description || article.excerpt,
+      title,
+      description,
+      images: article.featured_image ? [article.featured_image] : [`${siteUrl}/og-image.png`],
+      creator: '@financedaily',
+    },
+    other: {
+      'article:published_time': article.created_at,
+      'article:modified_time': article.updated_at,
+      'article:author': article.author,
+      'article:section': article.category_name || '',
     },
   };
 }
@@ -60,12 +83,13 @@ export default function ArticlePage({ params }: PageProps) {
   const contentWithAds = insertAdsIntoContent(article.content);
 
   // JSON-LD Article schema
+  const siteUrl = process.env.SITE_URL || 'https://financedailyus.com';
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt,
-    image: article.featured_image || undefined,
+    image: article.featured_image || `${siteUrl}/og-image.png`,
     datePublished: article.created_at,
     dateModified: article.updated_at,
     author: {
@@ -75,15 +99,50 @@ export default function ArticlePage({ params }: PageProps) {
     publisher: {
       '@type': 'Organization',
       name: 'FinanceDaily',
+      url: siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${process.env.SITE_URL || ''}/logo.png`,
+        url: `${siteUrl}/logo.png`,
+        width: 512,
+        height: 512,
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${process.env.SITE_URL || ''}/article/${article.slug}`,
+      '@id': `${siteUrl}/article/${article.slug}`,
     },
+    url: `${siteUrl}/article/${article.slug}`,
+    articleSection: article.category_name || 'Finance',
+    keywords: article.meta_keywords || '',
+    wordCount: article.content?.split(/\s+/).length || 0,
+    isAccessibleForFree: true,
+    inLanguage: 'en-US',
+  };
+
+  // BreadcrumbList schema
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: article.category_name || 'Articles',
+        item: `${siteUrl}/category/${article.category_slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: article.title,
+        item: `${siteUrl}/article/${article.slug}`,
+      },
+    ],
   };
 
   return (
@@ -91,6 +150,10 @@ export default function ArticlePage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -305,7 +368,7 @@ function insertAdsIntoContent(content: string): string {
 }
 
 function ShareButton({ platform, article }: { platform: string; article: Article }) {
-  const url = `${process.env.SITE_URL || ''}/article/${article.slug}`;
+  const url = `${process.env.SITE_URL || 'https://financedailyus.com'}/article/${article.slug}`;
   const text = encodeURIComponent(article.title);
   
   const links: Record<string, string> = {

@@ -15,12 +15,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const category = getCategoryBySlug(params.slug) as Category | undefined;
   if (!category) return { title: 'Category Not Found' };
 
+  const siteUrl = 'https://financedailyus.com';
+  const title = `${category.name} News & Analysis — Latest ${category.name} Updates`;
+  const description = category.description || `Latest ${category.name} news, in-depth analysis, expert commentary, and breaking updates from FinanceDaily. Stay informed on ${category.name.toLowerCase()} trends.`;
+
   return {
-    title: `${category.name} News & Analysis`,
-    description: category.description || `Latest ${category.name} news, analysis, and insights from FinanceDaily.`,
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/category/${params.slug}`,
+    },
     openGraph: {
       title: `${category.name} — FinanceDaily`,
-      description: category.description || `Latest ${category.name} news and analysis.`,
+      description,
+      url: `${siteUrl}/category/${params.slug}`,
+      siteName: 'FinanceDaily',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${category.name} News — FinanceDaily`,
+      description,
     },
   };
 }

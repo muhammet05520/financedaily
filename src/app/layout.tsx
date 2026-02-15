@@ -7,11 +7,17 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'FinanceDaily — Financial News, Market Analysis & Investment Insights',
+    default: 'FinanceDaily — Breaking Financial News, Stock Market & Crypto Analysis',
     template: '%s | FinanceDaily',
   },
-  description: 'Your trusted source for breaking financial news, stock market analysis, cryptocurrency updates, and expert investment insights. Stay ahead of the markets with FinanceDaily.',
-  keywords: ['financial news', 'stock market', 'investing', 'cryptocurrency', 'economy', 'personal finance', 'market analysis'],
+  description: 'Get the latest breaking financial news, real-time stock market data, cryptocurrency price analysis, investment strategies, and expert economic insights. Updated every 2 hours with AI-powered analysis.',
+  keywords: [
+    'financial news', 'stock market news', 'investing', 'cryptocurrency news',
+    'economy', 'personal finance', 'market analysis', 'bitcoin price',
+    'stock market today', 'breaking financial news', 'investment insights',
+    'crypto market', 'S&P 500', 'NASDAQ', 'Wall Street', 'forex',
+    'interest rates', 'Federal Reserve', 'earnings reports',
+  ],
   authors: [{ name: 'FinanceDaily Team' }],
   creator: 'FinanceDaily',
   publisher: 'FinanceDaily',
@@ -20,28 +26,32 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.SITE_URL || 'https://financedailyus.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
     siteName: 'FinanceDaily',
-    title: 'FinanceDaily — Financial News, Market Analysis & Investment Insights',
-    description: 'Your trusted source for breaking financial news, stock market analysis, cryptocurrency updates, and expert investment insights.',
+    title: 'FinanceDaily — Breaking Financial News, Stock Market & Crypto Analysis',
+    description: 'Get the latest breaking financial news, real-time stock market data, cryptocurrency analysis, and expert investment insights. Updated every 2 hours.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'FinanceDaily',
+        alt: 'FinanceDaily - Financial News & Market Analysis',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FinanceDaily',
-    description: 'Your trusted source for financial news & market analysis',
+    title: 'FinanceDaily — Breaking Financial News & Market Analysis',
+    description: 'Real-time stock market data, crypto analysis, and expert investment insights. Updated every 2 hours.',
     images: ['/og-image.png'],
+    creator: '@financedaily',
   },
   robots: {
     index: true,
@@ -54,8 +64,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
+  category: 'finance',
+  other: {
+    'google-site-verification': '',
+    'msvalidate.01': '',
+    'news_keywords': 'financial news, stock market, cryptocurrency, investing, economy',
   },
 };
 
@@ -69,15 +82,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f172a" />
+        <meta name="apple-mobile-web-app-title" content="FinanceDaily" />
+        <meta name="application-name" content="FinanceDaily" />
+        <meta name="msapplication-TileColor" content="#2563eb" />
 
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+        <link rel="dns-prefetch" href="https://api.binance.com" />
         
         {/* AdSense Script */}
         <script
@@ -102,13 +120,17 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'NewsMediaOrganization',
               name: 'FinanceDaily',
-              url: process.env.SITE_URL || 'http://localhost:3000',
+              url: 'https://financedailyus.com',
               logo: {
                 '@type': 'ImageObject',
-                url: `${process.env.SITE_URL || ''}/logo.png`,
+                url: 'https://financedailyus.com/logo.png',
+                width: 512,
+                height: 512,
               },
               sameAs: [],
-              description: 'Your trusted source for financial news, market analysis, and investment insights.',
+              description: 'Your trusted source for breaking financial news, stock market analysis, cryptocurrency updates, and expert investment insights. Updated every 2 hours.',
+              foundingDate: '2025',
+              publishingPrinciples: 'https://financedailyus.com/about',
             }),
           }}
         />

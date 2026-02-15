@@ -2,5 +2,17 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Disallow: /_next/
 
-Sitemap: https://financedaily.com/sitemap.xml
+# Sitemaps
+Sitemap: https://financedailyus.com/sitemap.xml
+
+# Crawl-delay for polite bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-News
+Allow: /
