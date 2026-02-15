@@ -104,13 +104,16 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
 
-        {/* Google Analytics placeholder */}
-        {/* 
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXX" strategy="afterInteractive" />
-        <Script id="gtag" strategy="afterInteractive">
-          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXX');`}
-        </Script>
-        */}
+        {/* Google Analytics */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-4VBJ56VFMB"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-4VBJ56VFMB');`,
+          }}
+        />
 
         {/* JSON-LD Organization Schema */}
         <script
