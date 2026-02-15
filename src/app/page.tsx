@@ -13,11 +13,11 @@ export default function HomePage() {
   const trendingArticles = getTrendingArticles(5) as Article[];
   const categories = getCategories() as Category[];
   
-  // Use latest articles as featured (first 3)
-  const featuredArticles = allArticles.slice(0, 3);
-  const mainFeatured = featuredArticles[0];
-  const secondaryFeatured = featuredArticles.slice(1, 3);
-  const latestArticles = allArticles.slice(3, 20);
+  // Main featured = newest article
+  const mainFeatured = allArticles[0];
+  const secondaryFeatured = allArticles.slice(1, 3);
+  // Latest News = ALL remaining articles (not just 3-20)
+  const latestArticles = allArticles.slice(1);
 
   return (
     <div className="min-h-screen">
@@ -89,14 +89,7 @@ export default function HomePage() {
           {/* Articles grid */}
           <div className="lg:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {latestArticles.slice(0, 4).map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
-
-            {/* More articles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {latestArticles.slice(4, 8).map((article) => (
+              {latestArticles.slice(0, 8).map((article) => (
                 <ArticleCard key={article.id} article={article} />
               ))}
             </div>
@@ -160,8 +153,8 @@ export default function HomePage() {
               All Articles →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestArticles.slice(8).map((article) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {latestArticles.slice(8, 20).map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>

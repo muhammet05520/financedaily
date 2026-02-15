@@ -146,7 +146,7 @@ def check_site_health() -> bool:
 
 
 def git_push_changes() -> bool:
-    """Commit and push changes to GitHub, triggering Vercel rebuild"""
+    """Commit and push changes to GitHub, then trigger Vercel deploy"""
     try:
         git_exe = r"C:\Program Files\Git\bin\git.exe"
         
@@ -181,7 +181,9 @@ def git_push_changes() -> bool:
         )
 
         if result.returncode == 0:
-            print("   ✅ Pushed to GitHub → Vercel will auto-rebuild")
+            print("   ✅ Pushed to GitHub")
+            # Trigger Vercel deploy via API
+            trigger_vercel_deploy()
             return True
         else:
             print(f"   ❌ Git push failed: {result.stderr[:200]}")
@@ -190,3 +192,51 @@ def git_push_changes() -> bool:
     except Exception as e:
         print(f"   ❌ Git error: {e}")
         return False
+
+
+def trigger_vercel_deploy():
+    """Trigger Vercel production deployment via API after git push"""
+    try:
+        import requests as req
+
+        # Read Vercel CLI auth token
+        appdata = os.environ.get('APPDATA', '')
+        auth_path = os.path.join(appdata, 'com.vercel.cli', 'Data', 'auth.json')
+        if not os.path.exists(auth_path):
+            print("   ⚠️  Vercel auth not found, skipping deploy")
+            return
+
+        with open(auth_path, 'r') as f:
+            token = json.load(f).get('token', '')
+        if not token:
+            print("   ⚠️  Vercel token empty, skipping deploy")
+            return
+
+        # Trigger deployment from GitHub repo
+        r = req.post(
+            'https://api.vercel.com/v13/deployments',
+            headers={
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'name': 'financedaily',
+                'target': 'production',
+                'project': 'prj_yzWuSUfPkRoZxRkMzd4CxaxIxVBd',
+                'gitSource': {
+                    'type': 'github',
+                    'repo': 'muhammet05520/financedaily',
+                    'ref': 'master',
+                    'repoId': 1156621102
+                }
+            },
+            timeout=30
+        )
+
+        if r.status_code == 200:
+            print("   🚀 Vercel deploy triggered! (~30s build)")
+        else:
+            print(f"   ⚠️  Vercel deploy failed ({r.status_code}), site will update on next manual deploy")
+
+    except Exception as e:
+        print(f"   ⚠️  Vercel deploy error: {e}")
