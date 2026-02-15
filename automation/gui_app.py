@@ -747,7 +747,7 @@ class AutomationApp:
         self.log("")
         self.log("1️⃣  Finansal haberler çekiliyor...", "step")
         try:
-            hours_back = INTERVAL_HOURS + 1  # 2 saat interval + 1 saat buffer
+            hours_back = 72  # Free plan ~24h gecikme, dedup tekrarları engeller
             news_items = fetch_all_news(hours_back=hours_back)
 
             # Track API calls (each topic = 1 API call)

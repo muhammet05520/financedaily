@@ -10,14 +10,15 @@ from datetime import datetime, timedelta
 from config import NEWS_API_KEY, FINNHUB_API_KEY, NEWS_TOPICS
 
 
-def fetch_news_from_newsapi(query: str, page_size: int = 5, hours_back: int = 3) -> list:
-    """Fetch news articles from NewsAPI.org, only from the last N hours"""
+def fetch_news_from_newsapi(query: str, page_size: int = 10, hours_back: int = 24) -> list:
+    """Fetch news articles from NewsAPI.org, filtered locally to last N hours"""
     if not NEWS_API_KEY:
         print(f"  [!] NewsAPI key not configured, using placeholder for: {query}")
         return generate_placeholder_news(query)
 
-    # Only fetch news published after this time
-    from_time = (datetime.utcnow() - timedelta(hours=hours_back)).strftime('%Y-%m-%dT%H:%M:%S')
+    # NOTE: NewsAPI free plan does NOT support 'from' param (returns 0 results)
+    # We fetch latest articles and filter by publishedAt locally
+    cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
 
     url = 'https://newsapi.org/v2/everything'
     params = {
@@ -25,7 +26,6 @@ def fetch_news_from_newsapi(query: str, page_size: int = 5, hours_back: int = 3)
         'language': 'en',
         'sortBy': 'publishedAt',
         'pageSize': page_size,
-        'from': from_time,
         'apiKey': NEWS_API_KEY,
     }
 
@@ -39,8 +39,20 @@ def fetch_news_from_newsapi(query: str, page_size: int = 5, hours_back: int = 3)
             return []
 
         articles = []
+        skipped_old = 0
         for article in data.get('articles', []):
             if article.get('title') and article['title'] != '[Removed]':
+                # Local time filter: skip articles older than cutoff
+                published = article.get('publishedAt', '')
+                if published and hours_back < 168:  # Only filter if less than 1 week
+                    try:
+                        pub_dt = datetime.fromisoformat(published.replace('Z', '+00:00')).replace(tzinfo=None)
+                        if pub_dt < cutoff_time:
+                            skipped_old += 1
+                            continue
+                    except:
+                        pass  # If parse fails, keep the article
+
                 articles.append({
                     'title': article['title'],
                     'description': article.get('description', ''),
@@ -48,8 +60,11 @@ def fetch_news_from_newsapi(query: str, page_size: int = 5, hours_back: int = 3)
                     'source': article.get('source', {}).get('name', 'Unknown'),
                     'url': article.get('url', ''),
                     'image_url': article.get('urlToImage', ''),
-                    'published_at': article.get('publishedAt', ''),
+                    'published_at': published,
                 })
+
+        if skipped_old:
+            print(f"    ({skipped_old} old articles filtered out)")
 
         return articles
 
@@ -148,14 +163,14 @@ def is_duplicate(title: str, existing_titles: set) -> bool:
     return False
 
 
-def fetch_all_news(hours_back: int = 3) -> list:
+def fetch_all_news(hours_back: int = 24) -> list:
     """Fetch news from all topics, filtering out already published articles"""
     all_news = []
     print(f"\n📰 Fetching news from last {hours_back} hours...")
 
     for topic in NEWS_TOPICS:
         print(f"  → Searching: {topic}")
-        news = fetch_news_from_newsapi(topic, page_size=3, hours_back=hours_back)
+        news = fetch_news_from_newsapi(topic, page_size=10, hours_back=hours_back)
         all_news.extend(news)
 
     # Remove duplicates based on title (within fetched news)
